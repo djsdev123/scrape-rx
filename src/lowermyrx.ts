@@ -19,13 +19,15 @@ exports.invoke = (req: express.Request, res: express.Response) => {
 
     try {
       await page.waitForSelector("#SearchDrugText", { timeout: 3000 })
-      await page.type("#SearchDrugText", req.query.drug, { delay: 100 })
+  const drugStr = typeof req.query.drug === 'string' ? req.query.drug : Array.isArray(req.query.drug) && typeof req.query.drug[0] === 'string' ? req.query.drug[0] : '';
+  await page.type("#SearchDrugText", drugStr, { delay: 100 })
       await page.waitForSelector(".popular_sesrch > ul > li")
-      await page.waitFor(500)
+      await new Promise(resolve => setTimeout(resolve, 500))
       await page.click(".popular_sesrch > ul > li")
 
       await page.waitForSelector("#getzipcode")
-      await page.type("#getzipcode", req.query.zipcode)
+  const zipcodeStr = typeof req.query.zipcode === 'string' ? req.query.zipcode : Array.isArray(req.query.zipcode) && typeof req.query.zipcode[0] === 'string' ? req.query.zipcode[0] : '';
+  await page.type("#getzipcode", zipcodeStr)
       await page.click(".find_button")
 
       await page.waitForSelector(".pharmacy_list .card:nth-child(3n)")
@@ -48,7 +50,7 @@ exports.invoke = (req: express.Request, res: express.Response) => {
       await browser.close()
     } catch (error) {
       console.error(error)
-      res.status(200).send({ source, offers: [], error: error.toString() })
+      res.status(200).send({ source, offers: [], error: (error as Error).toString() })
       await browser.close()
     }
   })

@@ -18,10 +18,11 @@ exports.invoke = (req: express.Request, res: express.Response) => {
     await page.goto(url, { timeout: 0 })
 
     try {
-      await page.waitForSelector("input[type='search']", { timeout: 3000 })
-      await page.type("input[type='search']", req.query.drug)
+      await page.waitForSelector(".drug-search-auto-complete input", { timeout: 3000 })
+  const drugStr = typeof req.query.drug === 'string' ? req.query.drug : Array.isArray(req.query.drug) && typeof req.query.drug[0] === 'string' ? req.query.drug[0] : '';
+  await page.type(".drug-search-auto-complete input", drugStr)
       await page.waitForSelector(".ant-select-dropdown-menu")
-      await page.waitFor(500)
+      await new Promise(res => setTimeout(res, 500)) //fix
 
       await Promise.all([
         page.waitForNavigation(),
@@ -31,7 +32,8 @@ exports.invoke = (req: express.Request, res: express.Response) => {
       await page.waitForSelector(".zip-code a")
       await page.click(".zip-code a")
       await page.waitForSelector("input.zip-code-input-search")
-      await page.type("input.zip-code-input-search", req.query.zipcode)
+  const zipcodeStr = typeof req.query.zipcode === 'string' ? req.query.zipcode : Array.isArray(req.query.zipcode) && typeof req.query.zipcode[0] === 'string' ? req.query.zipcode[0] : '';
+  await page.type("input.zip-code-input-search", zipcodeStr)
       await page.click(".zip-code button")
 
       await page.waitForSelector(".results-list > div")
@@ -58,7 +60,7 @@ exports.invoke = (req: express.Request, res: express.Response) => {
       await browser.close()
     } catch (error) {
       console.error(error)
-      res.status(200).send({ source, offers: [], error: error.toString() })
+      res.status(200).send({ source, offers: [], error: (error as Error).toString() })
       await browser.close()
     }
   })

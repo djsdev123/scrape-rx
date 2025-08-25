@@ -1,0 +1,2 @@
+//span[@data-testid="strength-quantity-header"]
+

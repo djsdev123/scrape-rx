@@ -1,4 +1,3 @@
-
 // puppeteer-extra is a drop-in replacement for puppeteer,
 // it augments the installed puppeteer with plugin functionality.
 // Any number of plugins can be added through `puppeteer.use()`
@@ -20,6 +19,9 @@ const wellrx = require('./built/wellrx')
 
 exports.entrypoint = (req, res) => {
   switch (req.path) {
+    case '/':
+      res.send('API is running');
+      break;
     case '/goodrx':
       return goodrx.invoke(req, res)
     case '/lowermyrx':

@@ -13,26 +13,36 @@ exports.invoke = (req: express.Request, res: express.Response) => {
   if (!validateRequest(req, res)) {
     return
   }
+  
 
   puppeteer.launch({ headless: true, args: ["--no-sandbox"] })
   .then(async (browser: Browser) => {
     const page = await browser.newPage()
     const pendingXHR = new PendingXHR(page)
-    const drug = req.query.drug
+    const drug = typeof req.query.drug === 'string'
+      ? req.query.drug
+      : Array.isArray(req.query.drug) && typeof req.query.drug[0] === 'string'
+        ? req.query.drug[0]
+        : '';
+    const zipcode = typeof req.query.zipcode === 'string'
+      ? req.query.zipcode
+      : Array.isArray(req.query.zipcode) && typeof req.query.zipcode[0] === 'string'
+        ? req.query.zipcode[0]
+        : '';
 
     await page.goto(url, { timeout: 0 })
 
     try {
       await page.waitForSelector("input[data-qa='search_inp']", { timeout: 3000 })
       await page.type("input[data-qa='search_inp']", drug, { delay: 100 })
-      await page.waitForSelector("nav[data-qa='typeahead'] > a")
-      await page.waitFor(500)
+  await page.waitForSelector("nav[data-qa='typeahead'] > a")
+  await new Promise(resolve => setTimeout(resolve, 500))
       await page.click("nav[data-qa='typeahead'] > a")
 
       await page.waitForSelector("button[data-qa='set_location_button']")
       await page.click("button[data-qa='set_location_button']")
       await page.waitForSelector("#locationModalInput")
-      await page.type("#locationModalInput", req.query.zipcode)
+      await page.type("#locationModalInput", zipcode)
       await page.click("#uat-location-submit")
 
       await page.waitForSelector("button[data-qa='location_element_after_setting_location']")
@@ -67,7 +77,7 @@ exports.invoke = (req: express.Request, res: express.Response) => {
       await browser.close()
     } catch (error) {
       console.error(error)
-      res.status(200).send({ source, offers: [], error: error.toString() })
+      res.status(200).send({ source, offers: [], error: (error as Error).toString() })
       await browser.close()
     }
   })

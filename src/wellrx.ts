@@ -19,11 +19,13 @@ export const invoke = (req: express.Request, res: express.Response) => {
 
     try {
       await page.waitForSelector("#drugname", { timeout: 3000 })
-      await page.type("#drugname", req.query.drug, { delay: 300 })
+  const drugStr = typeof req.query.drug === 'string' ? req.query.drug : Array.isArray(req.query.drug) && typeof req.query.drug[0] === 'string' ? req.query.drug[0] : '';
+  await page.type("#drugname", drugStr, { delay: 300 })
       await page.waitForSelector("ul.ui-autocomplete")
       await page.click("ul.ui-autocomplete > li")
-      await page.waitFor(500)
-      await page.type("#address", req.query.zipcode)
+      await new Promise(res => setTimeout(res, 500))//fix
+  const zipcodeStr = typeof req.query.zipcode === 'string' ? req.query.zipcode : Array.isArray(req.query.zipcode) && typeof req.query.zipcode[0] === 'string' ? req.query.zipcode[0] : '';
+  await page.type("#address", zipcodeStr)
 
       await Promise.all([
         page.waitForNavigation(),
@@ -49,7 +51,7 @@ export const invoke = (req: express.Request, res: express.Response) => {
       await browser.close()
     } catch (error) {
       console.error(error)
-      res.status(200).send({ source, offers: [], error: error.toString() })
+      res.status(200).send({ source, offers: [], error: (error as Error).toString() })
       await browser.close()
     }
   })
